@@ -74,6 +74,7 @@ class WatchlistController extends Controller
                         'number_of_episodes' => $tmdbData['number_of_episodes'],
                         'status' => $tmdbData['status'],
                         'genres' => $tmdbData['genres'],
+                        'watch/providers' => $tmdbData['watch/providers'] ?? null,
                     ];
                 } elseif ($item->movie) {
                     $tmdbData = $this->tmdbService->getMovie($item->movie->tmdb_id);
@@ -95,6 +96,7 @@ class WatchlistController extends Controller
                         'release_date' => $tmdbData['release_date'],
                         'runtime' => $tmdbData['runtime'],
                         'genres' => $tmdbData['genres'],
+                        'watch/providers' => $tmdbData['watch/providers'] ?? null,
                     ];
                 }
             } catch (\Exception $e) {

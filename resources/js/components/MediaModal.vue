@@ -62,6 +62,134 @@
                         <p class="text-gray-300 leading-relaxed">{{ mediaData.overview }}</p>
                     </div>
 
+                    <!-- Watch Providers for Movies -->
+                    <div v-if="type === 'movie' && mediaData['watch/providers']?.results?.US" class="mb-6">
+                        <h2 class="text-xl font-semibold text-white mb-4">Where to Watch</h2>
+                        <div class="bg-white/5 rounded-lg p-4">
+                            <div v-if="mediaData['watch/providers'].results.US.flatrate?.length" class="mb-4">
+                                <p class="text-sm text-gray-400 mb-2">Streaming</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <div 
+                                        v-for="provider in mediaData['watch/providers'].results.US.flatrate"
+                                        :key="provider.provider_id"
+                                        class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
+                                    >
+                                        <img 
+                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                                            :alt="provider.provider_name"
+                                            class="w-6 h-6 rounded"
+                                        />
+                                        <span class="text-white text-sm">{{ provider.provider_name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="mediaData['watch/providers'].results.US.buy?.length" class="mb-4">
+                                <p class="text-sm text-gray-400 mb-2">Buy</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <div 
+                                        v-for="provider in mediaData['watch/providers'].results.US.buy"
+                                        :key="provider.provider_id"
+                                        class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
+                                    >
+                                        <img 
+                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                                            :alt="provider.provider_name"
+                                            class="w-6 h-6 rounded"
+                                        />
+                                        <span class="text-white text-sm">{{ provider.provider_name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="mediaData['watch/providers'].results.US.rent?.length">
+                                <p class="text-sm text-gray-400 mb-2">Rent</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <div 
+                                        v-for="provider in mediaData['watch/providers'].results.US.rent"
+                                        :key="provider.provider_id"
+                                        class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
+                                    >
+                                        <img 
+                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                                            :alt="provider.provider_name"
+                                            class="w-6 h-6 rounded"
+                                        />
+                                        <span class="text-white text-sm">{{ provider.provider_name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="!mediaData['watch/providers'].results.US.flatrate?.length && !mediaData['watch/providers'].results.US.buy?.length && !mediaData['watch/providers'].results.US.rent?.length">
+                                <p class="text-gray-400 text-sm">No streaming providers available in your region.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Watch Providers for TV Shows -->
+                    <div v-if="type === 'tv' && mediaData['watch/providers']?.results?.US" class="mb-6">
+                        <h2 class="text-xl font-semibold text-white mb-4">Where to Watch</h2>
+                        <div class="bg-white/5 rounded-lg p-4">
+                            <div v-if="mediaData['watch/providers'].results.US.flatrate?.length" class="mb-4">
+                                <p class="text-sm text-gray-400 mb-2">Streaming</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <div 
+                                        v-for="provider in mediaData['watch/providers'].results.US.flatrate"
+                                        :key="provider.provider_id"
+                                        class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
+                                    >
+                                        <img 
+                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                                            :alt="provider.provider_name"
+                                            class="w-6 h-6 rounded"
+                                        />
+                                        <span class="text-white text-sm">{{ provider.provider_name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="mediaData['watch/providers'].results.US.buy?.length" class="mb-4">
+                                <p class="text-sm text-gray-400 mb-2">Buy</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <div 
+                                        v-for="provider in mediaData['watch/providers'].results.US.buy"
+                                        :key="provider.provider_id"
+                                        class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
+                                    >
+                                        <img 
+                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                                            :alt="provider.provider_name"
+                                            class="w-6 h-6 rounded"
+                                        />
+                                        <span class="text-white text-sm">{{ provider.provider_name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="mediaData['watch/providers'].results.US.rent?.length">
+                                <p class="text-sm text-gray-400 mb-2">Rent</p>
+                                <div class="flex flex-wrap gap-2">
+                                    <div 
+                                        v-for="provider in mediaData['watch/providers'].results.US.rent"
+                                        :key="provider.provider_id"
+                                        class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
+                                    >
+                                        <img 
+                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                                            :alt="provider.provider_name"
+                                            class="w-6 h-6 rounded"
+                                        />
+                                        <span class="text-white text-sm">{{ provider.provider_name }}</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div v-if="!mediaData['watch/providers'].results.US.flatrate?.length && !mediaData['watch/providers'].results.US.buy?.length && !mediaData['watch/providers'].results.US.rent?.length">
+                                <p class="text-gray-400 text-sm">No streaming providers available in your region.</p>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Seasons (TV Shows only) -->
                     <div v-if="type === 'tv' && mediaData.seasons && !selectedSeason" class="mb-6">
                         <h2 class="text-xl font-semibold text-white mb-4">Seasons</h2>
@@ -367,6 +495,27 @@ interface MediaData {
     number_of_seasons?: number;
     runtime?: number;
     seasons?: Season[];
+    'watch/providers'?: {
+        results?: {
+            [country: string]: {
+                flatrate?: Array<{
+                    logo_path: string;
+                    provider_name: string;
+                    provider_id: number;
+                }>;
+                buy?: Array<{
+                    logo_path: string;
+                    provider_name: string;
+                    provider_id: number;
+                }>;
+                rent?: Array<{
+                    logo_path: string;
+                    provider_name: string;
+                    provider_id: number;
+                }>;
+            };
+        };
+    };
 }
 
 const props = defineProps<{

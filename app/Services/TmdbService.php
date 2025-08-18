@@ -72,7 +72,7 @@ class TmdbService
     {
         return $this->makeRequest("movie/{$id}", [
             'language' => 'en-US',
-            'append_to_response' => 'credits,videos'
+            'append_to_response' => 'credits,videos,watch/providers'
         ]);
     }
 
