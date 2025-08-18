@@ -35,45 +35,69 @@ class TmdbService
     /**
      * Get popular TV shows
      */
-    public function getPopularTvShows(int $page = 1): array
+    public function getPopularTvShows(int $page = 1, ?string $region = null): array
     {
-        return $this->makeRequest('tv/popular', [
+        $params = [
             'page' => $page,
             'language' => 'en-US'
-        ]);
+        ];
+        
+        if ($region) {
+            $params['region'] = $region;
+        }
+        
+        return $this->makeRequest('tv/popular', $params);
     }
 
     /**
      * Get popular movies
      */
-    public function getPopularMovies(int $page = 1): array
+    public function getPopularMovies(int $page = 1, ?string $region = null): array
     {
-        return $this->makeRequest('movie/popular', [
+        $params = [
             'page' => $page,
             'language' => 'en-US'
-        ]);
+        ];
+        
+        if ($region) {
+            $params['region'] = $region;
+        }
+        
+        return $this->makeRequest('movie/popular', $params);
     }
 
     /**
      * Get TV show details
      */
-    public function getTvShow(int $id): array
+    public function getTvShow(int $id, ?string $region = null): array
     {
-        return $this->makeRequest("tv/{$id}", [
+        $params = [
             'language' => 'en-US',
-            'append_to_response' => 'credits,videos,external_ids,watch/providers'
-        ]);
+            'append_to_response' => 'credits,videos,external_ids'
+        ];
+        
+        if ($region) {
+            $params['region'] = $region;
+        }
+        
+        return $this->makeRequest("tv/{$id}", $params);
     }
 
     /**
      * Get movie details
      */
-    public function getMovie(int $id): array
+    public function getMovie(int $id, ?string $region = null): array
     {
-        return $this->makeRequest("movie/{$id}", [
+        $params = [
             'language' => 'en-US',
-            'append_to_response' => 'credits,videos,watch/providers'
-        ]);
+            'append_to_response' => 'credits,videos'
+        ];
+        
+        if ($region) {
+            $params['region'] = $region;
+        }
+        
+        return $this->makeRequest("movie/{$id}", $params);
     }
 
     /**
@@ -99,13 +123,20 @@ class TmdbService
     /**
      * Get upcoming movies
      */
-    public function getUpcomingMovies(int $page = 1): array
+    public function getUpcomingMovies(int $page = 1, ?string $region = null): array
     {
-        return $this->makeRequest('movie/upcoming', [
+        $params = [
             'page' => $page,
-            'language' => 'en-US',
-            'region' => 'US'
-        ]);
+            'language' => 'en-US'
+        ];
+        
+        if ($region) {
+            $params['region'] = $region;
+        } else {
+            $params['region'] = 'US'; // Default to US if no region specified
+        }
+        
+        return $this->makeRequest('movie/upcoming', $params);
     }
 
     /**
@@ -159,6 +190,42 @@ class TmdbService
         $baseUrl = $config['images']['secure_base_url'] ?? 'https://image.tmdb.org/t/p/';
         
         return $baseUrl . $size . $path;
+    }
+
+    /**
+     * Get list of countries
+     */
+    public function getCountries(): array
+    {
+        return Cache::remember('tmdb_countries', 86400, function () {
+            return $this->makeRequest('configuration/countries');
+        });
+    }
+
+    /**
+     * Get movie watch providers for a specific region
+     */
+    public function getMovieWatchProviders(int $movieId, string $region = 'US'): array
+    {
+        $cacheKey = "tmdb_movie_providers_{$movieId}_{$region}";
+        
+        return Cache::remember($cacheKey, 3600, function () use ($movieId, $region) {
+            $response = $this->makeRequest("movie/{$movieId}/watch/providers");
+            return $response['results'][$region] ?? [];
+        });
+    }
+
+    /**
+     * Get TV show watch providers for a specific region
+     */
+    public function getTvWatchProviders(int $tvId, string $region = 'US'): array
+    {
+        $cacheKey = "tmdb_tv_providers_{$tvId}_{$region}";
+        
+        return Cache::remember($cacheKey, 3600, function () use ($tvId, $region) {
+            $response = $this->makeRequest("tv/{$tvId}/watch/providers");
+            return $response['results'][$region] ?? [];
+        });
     }
 
     /**

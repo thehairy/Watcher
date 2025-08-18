@@ -26,6 +26,7 @@ class User extends Authenticatable
         'github_id',
         'steam_id',
         'avatar',
+        'country',
     ];
 
     /**

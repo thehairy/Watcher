@@ -44,7 +44,10 @@ class WatchlistController extends Controller
 
             try {
                 if ($item->show) {
-                    $tmdbData = $this->tmdbService->getTvShow($item->show->tmdb_id);
+                    $tmdbData = $this->tmdbService->getTvShow($item->show->tmdb_id, $user->country);
+                    
+                    // Get watch providers separately for the user's country
+                    $watchProviders = $this->tmdbService->getTvWatchProviders($item->show->tmdb_id, $user->country ?? 'US');
                     
                     // Calculate episode progress for TV shows using TMDB IDs
                     $watchedEpisodes = WatchProgress::where('user_id', $user->id)
@@ -107,10 +110,17 @@ class WatchlistController extends Controller
                         'number_of_episodes' => $tmdbData['number_of_episodes'],
                         'status' => $tmdbData['status'],
                         'genres' => $tmdbData['genres'],
-                        'watch/providers' => $tmdbData['watch/providers'] ?? null,
+                        'watch/providers' => [
+                            'results' => [
+                                $user->country ?? 'US' => $watchProviders
+                            ]
+                        ],
                     ];
                 } elseif ($item->movie) {
-                    $tmdbData = $this->tmdbService->getMovie($item->movie->tmdb_id);
+                    $tmdbData = $this->tmdbService->getMovie($item->movie->tmdb_id, $user->country);
+                    
+                    // Get watch providers separately for the user's country
+                    $watchProviders = $this->tmdbService->getMovieWatchProviders($item->movie->tmdb_id, $user->country ?? 'US');
                     
                     // For movies, progress is based on status
                     if ($item->status === 'completed') {
@@ -129,7 +139,11 @@ class WatchlistController extends Controller
                         'release_date' => $tmdbData['release_date'],
                         'runtime' => $tmdbData['runtime'],
                         'genres' => $tmdbData['genres'],
-                        'watch/providers' => $tmdbData['watch/providers'] ?? null,
+                        'watch/providers' => [
+                            'results' => [
+                                $user->country ?? 'US' => $watchProviders
+                            ]
+                        ],
                     ];
                 }
             } catch (\Exception $e) {
@@ -179,7 +193,7 @@ class WatchlistController extends Controller
             // Create or find the show/movie record with TMDB data
             if ($request->type === 'tv') {
                 // Get TV show details from TMDB first
-                $tmdbData = $this->tmdbService->getTvShow($request->tmdb_id);
+                $tmdbData = $this->tmdbService->getTvShow($request->tmdb_id, $user->country);
                 
                 $show = Show::firstOrCreate(
                     ['tmdb_id' => $request->tmdb_id],
@@ -211,7 +225,7 @@ class WatchlistController extends Controller
                 ]);
             } else {
                 // Get movie details from TMDB first
-                $tmdbData = $this->tmdbService->getMovie($request->tmdb_id);
+                $tmdbData = $this->tmdbService->getMovie($request->tmdb_id, $user->country);
                 
                 $movie = Movie::firstOrCreate(
                     ['tmdb_id' => $request->tmdb_id],

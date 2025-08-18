@@ -3,6 +3,7 @@ import { Head, Link, usePage } from '@inertiajs/vue3';
 import { Film, Calendar, Search, List, User, Settings, LogOut } from 'lucide-vue-next';
 import { computed } from 'vue';
 import ToastContainer from '@/components/ToastContainer.vue';
+import SettingsDropdown from '@/components/SettingsDropdown.vue';
 
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
@@ -71,11 +72,7 @@ defineProps<{
                             </div>
                             
                             <!-- Settings Dropdown -->
-                            <div class="relative">
-                                <button class="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200">
-                                    <Settings class="w-5 h-5" />
-                                </button>
-                            </div>
+                            <SettingsDropdown />
                         </div>
                     </div>
                 </div>

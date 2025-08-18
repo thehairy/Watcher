@@ -46,6 +46,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/watch-progress/show/{id}', [ShowController::class, 'getWatchProgress'])->name('api.watch-progress.show');
         Route::post('/watch-progress/episode', [ShowController::class, 'toggleEpisodeWatched'])->name('api.watch-progress.episode');
         Route::post('/watch-progress/season', [ShowController::class, 'toggleSeasonWatched'])->name('api.watch-progress.season');
+        
+        // Settings routes
+        Route::get('/settings/countries', [\App\Http\Controllers\SettingsController::class, 'getCountries'])->name('api.settings.countries');
+        Route::patch('/settings/country', [\App\Http\Controllers\SettingsController::class, 'updateCountry'])->name('api.settings.update-country');
     });
 });
 

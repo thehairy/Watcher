@@ -52,53 +52,35 @@
                                     </div>
                                     
                                     <!-- Watch Providers Icons -->
-                                    <div v-if="mediaData['watch/providers']?.results?.US && getTotalProviderCount(mediaData['watch/providers'].results.US) > 0" class="flex items-center space-x-2">
-                                        <div class="flex items-center space-x-1">
-                                            <!-- Flatrate providers -->
-                                            <template v-if="mediaData['watch/providers'].results.US.flatrate?.length">
+                                    <div v-if="headerWatchProviders.length > 0" class="flex items-center space-x-2">
+                                        <div class="flex items-center space-x-2">
+                                            <div 
+                                                v-for="provider in headerWatchProviders"
+                                                :key="provider.provider_id"
+                                                class="relative cursor-pointer hover:scale-110 transition-transform"
+                                                @click.stop="showWatchProviders = true"
+                                            >
                                                 <img 
-                                                    v-for="provider in mediaData['watch/providers'].results.US.flatrate.slice(0, 4)"
-                                                    :key="provider.provider_id"
                                                     :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
                                                     :alt="provider.provider_name"
-                                                    :title="provider.provider_name"
-                                                    class="w-8 h-8 rounded cursor-pointer hover:scale-110 transition-transform"
-                                                    @click.stop="showWatchProviders = true"
+                                                    :title="`${provider.provider_name} - ${provider.type === 'flatrate' ? 'Streaming' : 'Buy'}`"
+                                                    class="w-8 h-8 rounded"
                                                 />
-                                            </template>
-                                            <!-- Buy providers (if no flatrate) -->
-                                            <template v-else-if="mediaData['watch/providers'].results.US.buy?.length">
-                                                <img 
-                                                    v-for="provider in mediaData['watch/providers'].results.US.buy.slice(0, 4)"
-                                                    :key="provider.provider_id"
-                                                    :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
-                                                    :alt="provider.provider_name"
-                                                    :title="provider.provider_name"
-                                                    class="w-8 h-8 rounded cursor-pointer hover:scale-110 transition-transform"
-                                                    @click.stop="showWatchProviders = true"
-                                                />
-                                            </template>
-                                            <!-- Rent providers (if no flatrate or buy) -->
-                                            <template v-else-if="mediaData['watch/providers'].results.US.rent?.length">
-                                                <img 
-                                                    v-for="provider in mediaData['watch/providers'].results.US.rent.slice(0, 4)"
-                                                    :key="provider.provider_id"
-                                                    :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
-                                                    :alt="provider.provider_name"
-                                                    :title="provider.provider_name"
-                                                    class="w-8 h-8 rounded cursor-pointer hover:scale-110 transition-transform"
-                                                    @click.stop="showWatchProviders = true"
-                                                />
-                                            </template>
+                                                <!-- Provider type indicator -->
+                                                <div 
+                                                    :class="getProviderTypeBadge(provider.type)"
+                                                    class="absolute -top-1 -right-1 w-3 h-3 rounded-full border border-white/50"
+                                                ></div>
+                                            </div>
                                             
                                             <!-- Show "+" if there are more providers -->
                                             <div 
-                                                v-if="getTotalProviderCount(mediaData['watch/providers'].results.US) > 4"
+                                                v-if="mediaData['watch/providers']?.results?.[userCountry] && getTotalProviderCount(mediaData['watch/providers'].results[userCountry]) > 4"
                                                 class="w-8 h-8 bg-white/20 rounded flex items-center justify-center text-white text-sm cursor-pointer hover:bg-white/30 transition-colors"
                                                 @click.stop="showWatchProviders = true"
-                                                :title="`+${getTotalProviderCount(mediaData['watch/providers'].results.US) - 4} more`"
+                                                :title="`+${getTotalProviderCount(mediaData['watch/providers'].results[userCountry]) - 4} more`"
                                             >
-                                                +{{ getTotalProviderCount(mediaData['watch/providers'].results.US) - 4 }}
+                                                +{{ getTotalProviderCount(mediaData['watch/providers'].results[userCountry]) - 4 }}
                                             </div>
                                         </div>
                                     </div>
@@ -117,7 +99,7 @@
                     </div>
 
                     <!-- Watch Providers View -->
-                    <div v-if="showWatchProviders && mediaData['watch/providers']?.results?.US && getTotalProviderCount(mediaData['watch/providers'].results.US) > 0" class="mb-6">
+                    <div v-if="showWatchProviders && mediaData['watch/providers']?.results?.[userCountry] && getTotalProviderCount(mediaData['watch/providers'].results[userCountry]) > 0" class="mb-6">
                         <div class="flex items-center justify-between mb-4">
                             <h2 class="text-xl font-semibold text-white">Where to Watch</h2>
                             <button 
@@ -129,11 +111,11 @@
                         </div>
                         
                         <div class="bg-white/5 rounded-lg p-6">
-                            <div v-if="mediaData['watch/providers'].results.US.flatrate?.length" class="mb-4">
+                            <div v-if="mediaData['watch/providers'].results[userCountry]?.flatrate?.length" class="mb-2">
                                 <h3 class="text-lg font-medium text-white mb-3">Streaming</h3>
                                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     <div 
-                                        v-for="provider in mediaData['watch/providers'].results.US.flatrate"
+                                        v-for="provider in mediaData['watch/providers'].results[userCountry]?.flatrate"
                                         :key="provider.provider_id"
                                         class="flex flex-col items-center p-4 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
                                     >
@@ -145,13 +127,11 @@
                                         <span class="text-white text-sm text-center">{{ provider.provider_name }}</span>
                                     </div>
                                 </div>
-                            </div>
-
-                            <div v-if="mediaData['watch/providers'].results.US.buy?.length" class="mb-2">
+                            </div>                            <div v-if="mediaData['watch/providers'].results[userCountry]?.buy?.length" class="mb-2">
                                 <h3 class="text-lg font-medium text-white mb-3">Buy</h3>
                                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     <div 
-                                        v-for="provider in mediaData['watch/providers'].results.US.buy"
+                                        v-for="provider in mediaData['watch/providers'].results[userCountry]?.buy"
                                         :key="provider.provider_id"
                                         class="flex flex-col items-center p-4 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
                                     >
@@ -165,11 +145,11 @@
                                 </div>
                             </div>
 
-                            <div v-if="mediaData['watch/providers'].results.US.rent?.length" class="mb-4">
+                                                        <div v-if="mediaData['watch/providers'].results[userCountry]?.rent?.length" class="mb-2">
                                 <h3 class="text-lg font-medium text-white mb-3">Rent</h3>
                                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     <div 
-                                        v-for="provider in mediaData['watch/providers'].results.US.rent"
+                                        v-for="provider in mediaData['watch/providers'].results[userCountry]?.rent"
                                         :key="provider.provider_id"
                                         class="flex flex-col items-center p-4 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
                                     >
@@ -183,7 +163,7 @@
                                 </div>
                             </div>
 
-                            <div v-if="!mediaData['watch/providers'].results.US.flatrate?.length && !mediaData['watch/providers'].results.US.buy?.length && !mediaData['watch/providers'].results.US.rent?.length">
+                            <div v-if="!mediaData['watch/providers'].results[userCountry]?.flatrate?.length && !mediaData['watch/providers'].results[userCountry]?.buy?.length && !mediaData['watch/providers'].results[userCountry]?.rent?.length">
                                 <p class="text-gray-400 text-center">No streaming providers available in your region.</p>
                             </div>
                         </div>
@@ -353,14 +333,14 @@
                             </div>
 
                             <!-- Watch Providers -->
-                            <div v-if="selectedEpisode.watch_providers?.US" class="bg-white/5 rounded-lg p-4">
+                            <div v-if="selectedEpisode.watch_providers?.[userCountry]" class="bg-white/5 rounded-lg p-4">
                                 <h4 class="text-lg font-semibold text-white mb-3">Where to Watch</h4>
                                 
-                                <div v-if="selectedEpisode.watch_providers.US.flatrate?.length" class="mb-4">
+                                <div v-if="selectedEpisode.watch_providers[userCountry]?.flatrate?.length" class="mb-4">
                                     <p class="text-sm text-gray-400 mb-2">Streaming</p>
                                     <div class="flex flex-wrap gap-2">
                                         <div 
-                                            v-for="provider in selectedEpisode.watch_providers.US.flatrate"
+                                            v-for="provider in selectedEpisode.watch_providers[userCountry]?.flatrate"
                                             :key="provider.provider_id"
                                             class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
                                         >
@@ -374,11 +354,11 @@
                                     </div>
                                 </div>
 
-                                <div v-if="selectedEpisode.watch_providers.US.buy?.length" class="mb-4">
+                                <div v-if="selectedEpisode.watch_providers[userCountry]?.buy?.length" class="mb-4">
                                     <p class="text-sm text-gray-400 mb-2">Buy</p>
                                     <div class="flex flex-wrap gap-2">
                                         <div 
-                                            v-for="provider in selectedEpisode.watch_providers.US.buy"
+                                            v-for="provider in selectedEpisode.watch_providers[userCountry]?.buy"
                                             :key="provider.provider_id"
                                             class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
                                         >
@@ -392,11 +372,11 @@
                                     </div>
                                 </div>
 
-                                <div v-if="selectedEpisode.watch_providers.US.rent?.length">
+                                <div v-if="selectedEpisode.watch_providers[userCountry]?.rent?.length">
                                     <p class="text-sm text-gray-400 mb-2">Rent</p>
                                     <div class="flex flex-wrap gap-2">
                                         <div 
-                                            v-for="provider in selectedEpisode.watch_providers.US.rent"
+                                            v-for="provider in selectedEpisode.watch_providers[userCountry]?.rent"
                                             :key="provider.provider_id"
                                             class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
                                         >
@@ -410,7 +390,7 @@
                                     </div>
                                 </div>
 
-                                <div v-if="!selectedEpisode.watch_providers.US.flatrate?.length && !selectedEpisode.watch_providers.US.buy?.length && !selectedEpisode.watch_providers.US.rent?.length">
+                                <div v-if="!selectedEpisode.watch_providers[userCountry]?.flatrate?.length && !selectedEpisode.watch_providers[userCountry]?.buy?.length && !selectedEpisode.watch_providers[userCountry]?.rent?.length">
                                     <p class="text-gray-400 text-sm">No streaming providers available in your region.</p>
                                 </div>
                             </div>
@@ -459,6 +439,7 @@
 import { ref, computed, watch } from 'vue';
 import { X, Star, ChevronRight } from 'lucide-vue-next';
 import { useToast } from '@/composables/useToast';
+import { usePage } from '@inertiajs/vue3';
 
 interface Episode {
     id: number;
@@ -551,6 +532,30 @@ const emit = defineEmits<{
 }>();
 
 const { success, error } = useToast();
+const page = usePage();
+const user = computed(() => page.props.auth?.user);
+const userCountry = computed(() => user.value?.country || 'US');
+
+// Get combined watch providers for the header (streaming and buy only)
+const headerWatchProviders = computed(() => {
+    if (!mediaData.value?.['watch/providers']?.results?.[userCountry.value]) {
+        return [];
+    }
+
+    const providers = mediaData.value['watch/providers'].results[userCountry.value];
+    const allProviders = [
+        ...(providers.flatrate || []).map(p => ({ ...p, type: 'flatrate' })),
+        ...(providers.buy || []).map(p => ({ ...p, type: 'buy' }))
+    ];
+
+    // Remove duplicates based on provider_id, prioritizing flatrate > buy
+    const uniqueProviders = allProviders.filter((provider, index, self) => {
+        const firstIndex = self.findIndex(p => p.provider_id === provider.provider_id);
+        return index === firstIndex;
+    });
+
+    return uniqueProviders.slice(0, 4); // Limit to 4 for header display
+});
 
 // State
 const loading = ref(false);
@@ -622,6 +627,15 @@ const getTotalProviderCount = (providers: any) => {
     const buy = providers?.buy?.length || 0;
     const rent = providers?.rent?.length || 0;
     return flatrate + buy + rent;
+};
+
+const getProviderTypeBadge = (type: string) => {
+    switch (type) {
+        case 'flatrate': return 'bg-green-400'; // Streaming
+        case 'buy': return 'bg-blue-400'; // Purchase
+        case 'rent': return 'bg-yellow-400'; // Rental
+        default: return 'bg-gray-400';
+    }
 };
 
 // Methods

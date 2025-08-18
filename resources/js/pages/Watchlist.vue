@@ -259,6 +259,9 @@ const props = defineProps<{
 }>();
 
 const { success, error } = useToast();
+const page = usePage();
+const user = computed(() => page.props.auth?.user);
+const userCountry = computed(() => user.value?.country || 'US');
 const tmdbImageBaseUrl = 'https://image.tmdb.org/t/p/w500';
 
 // Modal state
@@ -487,11 +490,11 @@ const closeModal = () => {
 };
 
 const getWatchProviders = (item: WatchlistItem) => {
-    if (!item.content?.['watch/providers']?.results?.US) {
+    if (!item.content?.['watch/providers']?.results?.[userCountry.value]) {
         return [];
     }
 
-    const providers = item.content['watch/providers'].results.US;
+    const providers = item.content['watch/providers'].results[userCountry.value];
     const allProviders = [
         ...(providers.flatrate || []).map(p => ({ ...p, type: 'flatrate' })),
         ...(providers.buy || []).map(p => ({ ...p, type: 'buy' })),

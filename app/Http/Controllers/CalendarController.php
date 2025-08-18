@@ -18,6 +18,7 @@ class CalendarController extends Controller
     public function index()
     {
         $user = Auth::user();
+        $region = $user?->country;
         
         // Get user's watchlist items
         $watchlistItems = Watchlist::with(['show', 'movie'])
@@ -32,7 +33,7 @@ class CalendarController extends Controller
             try {
                 if ($item->show) {
                     // Get TV show details
-                    $tmdbData = $this->tmdbService->getTvShow($item->show->tmdb_id);
+                    $tmdbData = $this->tmdbService->getTvShow($item->show->tmdb_id, $region);
                     
                     $showData = [
                         'id' => $item->id,
@@ -78,7 +79,7 @@ class CalendarController extends Controller
 
                 } elseif ($item->movie) {
                     // Get movie details
-                    $tmdbData = $this->tmdbService->getMovie($item->movie->tmdb_id);
+                    $tmdbData = $this->tmdbService->getMovie($item->movie->tmdb_id, $region);
                     
                     $movieData = [
                         'id' => $item->id,
@@ -147,8 +148,11 @@ class CalendarController extends Controller
     public function getUpcoming()
     {
         try {
+            $user = auth()->user();
+            $region = $user?->country;
+            
             // Get upcoming movies and TV shows
-            $upcomingMovies = $this->tmdbService->getUpcomingMovies();
+            $upcomingMovies = $this->tmdbService->getUpcomingMovies(1, $region);
             $airingToday = $this->tmdbService->getTvAiringToday();
             $onTheAir = $this->tmdbService->getTvOnTheAir();
 

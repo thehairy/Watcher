@@ -25,7 +25,21 @@ class ShowController extends Controller
     public function getTvShow($id)
     {
         try {
-            $showData = $this->tmdbService->getTvShow($id);
+            $user = auth()->user();
+            $region = $user?->country ?? 'US';
+            
+            $showData = $this->tmdbService->getTvShow($id, $region);
+            
+            // Get watch providers separately for the user's country
+            $watchProviders = $this->tmdbService->getTvWatchProviders($id, $region);
+            
+            // Add watch providers to the response
+            $showData['watch/providers'] = [
+                'results' => [
+                    $region => $watchProviders
+                ]
+            ];
+            
             return response()->json($showData);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to fetch show details'], 500);
@@ -38,7 +52,21 @@ class ShowController extends Controller
     public function getMovie($id)
     {
         try {
-            $movieData = $this->tmdbService->getMovie($id);
+            $user = auth()->user();
+            $region = $user?->country ?? 'US';
+            
+            $movieData = $this->tmdbService->getMovie($id, $region);
+            
+            // Get watch providers separately for the user's country
+            $watchProviders = $this->tmdbService->getMovieWatchProviders($id, $region);
+            
+            // Add watch providers to the response
+            $movieData['watch/providers'] = [
+                'results' => [
+                    $region => $watchProviders
+                ]
+            ];
+            
             return response()->json($movieData);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to fetch movie details'], 500);
@@ -64,14 +92,19 @@ class ShowController extends Controller
     public function getEpisode($showId, $seasonNumber, $episodeNumber)
     {
         try {
+            $user = auth()->user();
+            $region = $user?->country ?? 'US';
+            
             // Get episode details
             $episodeData = $this->tmdbService->getTvEpisode($showId, $seasonNumber, $episodeNumber);
             
-            // Get show watch providers (episodes share the same providers as the show)
-            $showData = $this->tmdbService->getTvShow($showId);
-            if (isset($showData['watch/providers'])) {
-                $episodeData['watch_providers'] = $showData['watch/providers']['results'];
-            }
+            // Get show watch providers for the user's country (episodes share the same providers as the show)
+            $watchProviders = $this->tmdbService->getTvWatchProviders($showId, $region);
+            
+            // Add watch providers to the response
+            $episodeData['watch_providers'] = [
+                $region => $watchProviders
+            ];
             
             return response()->json($episodeData);
         } catch (\Exception $e) {
@@ -187,7 +220,9 @@ class ShowController extends Controller
             }
 
             // Get show data from TMDB
-            $showData = $this->tmdbService->getTvShow($tmdbShowId);
+            $user = \App\Models\User::find($userId);
+            $region = $user?->country;
+            $showData = $this->tmdbService->getTvShow($tmdbShowId, $region);
             
             // Calculate total released episodes
             $totalReleasedEpisodes = 0;

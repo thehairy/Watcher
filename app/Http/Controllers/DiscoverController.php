@@ -15,10 +15,13 @@ class DiscoverController extends Controller
     public function index()
     {
         try {
+            $user = auth()->user();
+            $region = $user?->country;
+            
             // Get initial discover data
             $trending = $this->tmdbService->getTrending();
-            $popularMovies = $this->tmdbService->getPopularMovies();
-            $popularTvShows = $this->tmdbService->getPopularTvShows();
+            $popularMovies = $this->tmdbService->getPopularMovies(1, $region);
+            $popularTvShows = $this->tmdbService->getPopularTvShows(1, $region);
 
             return Inertia::render('Discover', [
                 'trending' => $trending['results'] ?? [],
@@ -83,7 +86,10 @@ class DiscoverController extends Controller
         ]);
 
         try {
-            $results = $this->tmdbService->getPopularMovies($request->page ?? 1);
+            $user = auth()->user();
+            $region = $user?->country;
+            
+            $results = $this->tmdbService->getPopularMovies($request->page ?? 1, $region);
             return response()->json($results);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to fetch popular movies'], 500);
@@ -97,7 +103,10 @@ class DiscoverController extends Controller
         ]);
 
         try {
-            $results = $this->tmdbService->getPopularTvShows($request->page ?? 1);
+            $user = auth()->user();
+            $region = $user?->country;
+            
+            $results = $this->tmdbService->getPopularTvShows($request->page ?? 1, $region);
             return response()->json($results);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to fetch popular TV shows'], 500);
@@ -112,10 +121,13 @@ class DiscoverController extends Controller
         ]);
 
         try {
+            $user = auth()->user();
+            $region = $user?->country;
+            
             if ($request->type === 'movie') {
-                $content = $this->tmdbService->getMovie($request->id);
+                $content = $this->tmdbService->getMovie($request->id, $region);
             } else {
-                $content = $this->tmdbService->getTvShow($request->id);
+                $content = $this->tmdbService->getTvShow($request->id, $region);
             }
 
             return response()->json($content);
