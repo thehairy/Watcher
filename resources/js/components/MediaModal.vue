@@ -57,7 +57,7 @@
                 <!-- Content Body -->
                 <div class="p-6">
                     <!-- Overview -->
-                    <div class="mb-6">
+                    <div class="mb-4">
                         <h2 class="text-xl font-semibold text-white mb-3">Overview</h2>
                         <p class="text-gray-300 leading-relaxed">{{ mediaData.overview }}</p>
                     </div>

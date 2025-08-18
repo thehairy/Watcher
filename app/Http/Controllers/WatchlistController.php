@@ -57,6 +57,11 @@ class WatchlistController extends Controller
                     $data['episodes_watched'] = $watchedEpisodes;
                     $data['total_episodes'] = $totalEpisodes;
                     
+                    // Calculate progress percentage for TV shows
+                    if ($totalEpisodes > 0) {
+                        $data['progress'] = round(($watchedEpisodes / $totalEpisodes) * 100, 1);
+                    }
+                    
                     $data['content'] = [
                         'id' => $item->show->tmdb_id,
                         'title' => $tmdbData['name'],
@@ -72,6 +77,14 @@ class WatchlistController extends Controller
                     ];
                 } elseif ($item->movie) {
                     $tmdbData = $this->tmdbService->getMovie($item->movie->tmdb_id);
+                    
+                    // For movies, progress is based on status
+                    if ($item->status === 'completed') {
+                        $data['progress'] = 100;
+                    } elseif ($item->status === 'watching') {
+                        $data['progress'] = 50; // Default for watching movies
+                    }
+                    
                     $data['content'] = [
                         'id' => $item->movie->tmdb_id,
                         'title' => $tmdbData['title'],

@@ -8,6 +8,7 @@ use App\Models\WatchProgress;
 use App\Services\TmdbService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class ShowController extends Controller
 {
@@ -119,6 +120,9 @@ class ShowController extends Controller
             ]
         );
 
+        // Update watchlist progress
+        $this->updateWatchlistProgress($user->id, $request->show_id);
+
         return response()->json(['success' => true, 'watch_progress' => $watchProgress]);
     }
 
@@ -158,9 +162,58 @@ class ShowController extends Controller
                 );
             }
 
+            // Update watchlist progress
+            $this->updateWatchlistProgress($user->id, $request->show_id);
+
             return response()->json(['success' => true]);
         } catch (\Exception $e) {
             return response()->json(['error' => 'Failed to update season watch status'], 500);
+        }
+    }
+
+    /**
+     * Update watchlist progress based on watched episodes
+     */
+    private function updateWatchlistProgress($userId, $tmdbShowId)
+    {
+        try {
+            // Find the watchlist item
+            $watchlistItem = \App\Models\Watchlist::whereHas('show', function($query) use ($tmdbShowId) {
+                $query->where('tmdb_id', $tmdbShowId);
+            })->where('user_id', $userId)->first();
+
+            if (!$watchlistItem) {
+                return;
+            }
+
+            // Get total episodes from TMDB
+            $showData = $this->tmdbService->getTvShow($tmdbShowId);
+            $totalEpisodes = $showData['number_of_episodes'] ?? 0;
+
+            if ($totalEpisodes > 0) {
+                // Count watched episodes
+                $watchedEpisodes = WatchProgress::where('user_id', $userId)
+                    ->where('tmdb_show_id', $tmdbShowId)
+                    ->where('watched', true)
+                    ->count();
+
+                // Calculate progress percentage
+                $progress = round(($watchedEpisodes / $totalEpisodes) * 100, 1);
+
+                // Update watchlist item
+                $watchlistItem->update(['progress' => $progress]);
+
+                // If 100% complete, update status to completed
+                if ($progress >= 100 && $watchlistItem->status !== 'completed') {
+                    $watchlistItem->update(['status' => 'completed']);
+                }
+            }
+        } catch (\Exception $e) {
+            \Log::error('Failed to update watchlist progress', [
+                'user_id' => $userId,
+                'tmdb_show_id' => $tmdbShowId,
+                'error' => $e->getMessage()
+            ]);
         }
     }
 }
