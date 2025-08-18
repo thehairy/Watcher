@@ -103,59 +103,6 @@
                                         </div>
                                     </div>
 
-                                    <!-- Watch Providers -->
-                                    <div class="mb-2 h-8 flex items-center">
-                                        <div class="flex items-center justify-between w-full">
-                                            <span class="text-xs text-gray-400">Watch on:</span>
-                                            <div v-if="getWatchProviders(item).length > 0" class="flex space-x-1 items-center">
-                                                <div 
-                                                    v-for="provider in getWatchProviders(item).slice(0, 3)"
-                                                    :key="provider.provider_id"
-                                                    class="relative group"
-                                                >
-                                                    <img 
-                                                        :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
-                                                        :alt="provider.provider_name"
-                                                        :title="provider.provider_name"
-                                                        class="w-6 h-6 rounded"
-                                                    />
-                                                    <!-- Provider type badge -->
-                                                    <div :class="getProviderTypeBadge(provider)" class="absolute -top-1 -right-1 w-2 h-2 rounded-full"></div>
-                                                </div>
-                                                <div v-if="getWatchProviders(item).length > 3" class="relative">
-                                                    <span class="text-xs text-gray-400 cursor-pointer hover:text-white transition-colors ml-1 group/tooltip">
-                                                        +{{ getWatchProviders(item).length - 3 }}
-                                                        <!-- Tooltip showing additional providers -->
-                                                        <div class="absolute bottom-full right-0 mb-2 opacity-0 group-hover/tooltip:opacity-100 transition-opacity duration-200 pointer-events-none z-10">
-                                                            <div class="bg-black/90 backdrop-blur-sm border border-white/20 rounded-lg p-3 w-64 shadow-xl">
-                                                                <p class="text-xs text-gray-400 mb-2">Additional providers:</p>
-                                                                <div class="space-y-1">
-                                                                    <div 
-                                                                        v-for="provider in getWatchProviders(item).slice(3)"
-                                                                        :key="provider.provider_id"
-                                                                        class="flex items-center space-x-2"
-                                                                    >
-                                                                        <img 
-                                                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
-                                                                            :alt="provider.provider_name"
-                                                                            class="w-4 h-4 rounded flex-shrink-0"
-                                                                        />
-                                                                        <span class="text-xs text-white truncate flex-1" :title="provider.provider_name">
-                                                                            {{ provider.provider_name }}
-                                                                        </span>
-                                                                        <div :class="getProviderTypeBadge(provider)" class="w-2 h-2 rounded-full flex-shrink-0"></div>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            <div v-else class="text-xs text-gray-500 h-6 flex items-center">
-                                                Not available
-                                            </div>
-                                        </div>
-                                    </div>
                                     <!-- Status and completion info -->
                                     <div v-if="item.status === 'completed'" class="text-green-400 text-sm mb-2">
                                         Completed {{ formatDate(item.updated_at) }}
@@ -230,27 +177,6 @@ interface WatchlistItem {
         runtime?: number;
         status?: string;
         genres: Array<{ id: number; name: string }>;
-        'watch/providers'?: {
-            results?: {
-                [country: string]: {
-                    flatrate?: Array<{
-                        logo_path: string;
-                        provider_name: string;
-                        provider_id: number;
-                    }>;
-                    buy?: Array<{
-                        logo_path: string;
-                        provider_name: string;
-                        provider_id: number;
-                    }>;
-                    rent?: Array<{
-                        logo_path: string;
-                        provider_name: string;
-                        provider_id: number;
-                    }>;
-                };
-            };
-        };
     } | null;
 }
 
@@ -261,7 +187,6 @@ const props = defineProps<{
 const { success, error } = useToast();
 const page = usePage();
 const user = computed(() => page.props.auth?.user);
-const userCountry = computed(() => user.value?.country || 'US');
 const tmdbImageBaseUrl = 'https://image.tmdb.org/t/p/w500';
 
 // Modal state
@@ -487,36 +412,6 @@ const openMediaModal = (item: WatchlistItem) => {
 const closeModal = () => {
     isModalVisible.value = false;
     selectedItemId.value = undefined;
-};
-
-const getWatchProviders = (item: WatchlistItem) => {
-    if (!item.content?.['watch/providers']?.results?.[userCountry.value]) {
-        return [];
-    }
-
-    const providers = item.content['watch/providers'].results[userCountry.value];
-    const allProviders = [
-        ...(providers.flatrate || []).map(p => ({ ...p, type: 'flatrate' })),
-        ...(providers.buy || []).map(p => ({ ...p, type: 'buy' })),
-        ...(providers.rent || []).map(p => ({ ...p, type: 'rent' }))
-    ];
-
-    // Remove duplicates based on provider_id, prioritizing flatrate > buy > rent
-    const uniqueProviders = allProviders.filter((provider, index, self) => {
-        const firstIndex = self.findIndex(p => p.provider_id === provider.provider_id);
-        return index === firstIndex;
-    });
-
-    return uniqueProviders;
-};
-
-const getProviderTypeBadge = (provider: any) => {
-    switch (provider.type) {
-        case 'flatrate': return 'bg-green-400'; // Streaming
-        case 'buy': return 'bg-blue-400'; // Purchase
-        case 'rent': return 'bg-yellow-400'; // Rental
-        default: return 'bg-gray-400';
-    }
 };
 
 const refreshWatchlist = () => {

@@ -46,49 +46,14 @@ class WatchlistController extends Controller
                 if ($item->show) {
                     $tmdbData = $this->tmdbService->getTvShow($item->show->tmdb_id, $user->country);
                     
-                    // Get watch providers separately for the user's country
-                    $watchProviders = $this->tmdbService->getTvWatchProviders($item->show->tmdb_id, $user->country ?? 'US');
-                    
                     // Calculate episode progress for TV shows using TMDB IDs
                     $watchedEpisodes = WatchProgress::where('user_id', $user->id)
                         ->where('tmdb_show_id', $item->show->tmdb_id)
                         ->where('watched', true)
                         ->count();
                     
-                    // Get total episodes and filter only released episodes
-                    $totalEpisodes = 0;
-                    if (isset($tmdbData['seasons'])) {
-                        foreach ($tmdbData['seasons'] as $season) {
-                            if ($season['season_number'] > 0) {
-                                try {
-                                    $seasonData = $this->tmdbService->getTvSeason($item->show->tmdb_id, $season['season_number']);
-                                    if (isset($seasonData['episodes'])) {
-                                        foreach ($seasonData['episodes'] as $episode) {
-                                            // Only count released episodes
-                                            if (!empty($episode['air_date'])) {
-                                                $airDate = new \DateTime($episode['air_date']);
-                                                $today = new \DateTime();
-                                                $today->setTime(0, 0, 0);
-                                                
-                                                if ($airDate <= $today) {
-                                                    $totalEpisodes++;
-                                                }
-                                            } else {
-                                                // If no air date, assume it's released
-                                                $totalEpisodes++;
-                                            }
-                                        }
-                                    }
-                                } catch (\Exception $e) {
-                                    // Fallback to episode count from main show data if season fetch fails
-                                    $totalEpisodes = $tmdbData['number_of_episodes'] ?? 0;
-                                    break;
-                                }
-                            }
-                        }
-                    } else {
-                        $totalEpisodes = $tmdbData['number_of_episodes'] ?? 0;
-                    }
+                    // Use the basic episode count from TMDB data instead of fetching all seasons
+                    $totalEpisodes = $tmdbData['number_of_episodes'] ?? 0;
                     
                     $data['episodes_watched'] = $watchedEpisodes;
                     $data['total_episodes'] = $totalEpisodes;
@@ -110,17 +75,9 @@ class WatchlistController extends Controller
                         'number_of_episodes' => $tmdbData['number_of_episodes'],
                         'status' => $tmdbData['status'],
                         'genres' => $tmdbData['genres'],
-                        'watch/providers' => [
-                            'results' => [
-                                $user->country ?? 'US' => $watchProviders
-                            ]
-                        ],
                     ];
                 } elseif ($item->movie) {
                     $tmdbData = $this->tmdbService->getMovie($item->movie->tmdb_id, $user->country);
-                    
-                    // Get watch providers separately for the user's country
-                    $watchProviders = $this->tmdbService->getMovieWatchProviders($item->movie->tmdb_id, $user->country ?? 'US');
                     
                     // For movies, progress is based on status
                     if ($item->status === 'completed') {
@@ -139,11 +96,6 @@ class WatchlistController extends Controller
                         'release_date' => $tmdbData['release_date'],
                         'runtime' => $tmdbData['runtime'],
                         'genres' => $tmdbData['genres'],
-                        'watch/providers' => [
-                            'results' => [
-                                $user->country ?? 'US' => $watchProviders
-                            ]
-                        ],
                     ];
                 }
             } catch (\Exception $e) {
