@@ -186,11 +186,45 @@ class ShowController extends Controller
                 return;
             }
 
-            // Get total episodes from TMDB
+            // Get show data from TMDB
             $showData = $this->tmdbService->getTvShow($tmdbShowId);
-            $totalEpisodes = $showData['number_of_episodes'] ?? 0;
+            
+            // Calculate total released episodes
+            $totalReleasedEpisodes = 0;
+            if (isset($showData['seasons'])) {
+                foreach ($showData['seasons'] as $season) {
+                    if ($season['season_number'] > 0) {
+                        try {
+                            $seasonData = $this->tmdbService->getTvSeason($tmdbShowId, $season['season_number']);
+                            if (isset($seasonData['episodes'])) {
+                                foreach ($seasonData['episodes'] as $episode) {
+                                    // Only count released episodes
+                                    if (!empty($episode['air_date'])) {
+                                        $airDate = new \DateTime($episode['air_date']);
+                                        $today = new \DateTime();
+                                        $today->setTime(0, 0, 0);
+                                        
+                                        if ($airDate <= $today) {
+                                            $totalReleasedEpisodes++;
+                                        }
+                                    } else {
+                                        // If no air date, assume it's released
+                                        $totalReleasedEpisodes++;
+                                    }
+                                }
+                            }
+                        } catch (\Exception $e) {
+                            // Fallback to total episode count if season fetch fails
+                            $totalReleasedEpisodes = $showData['number_of_episodes'] ?? 0;
+                            break;
+                        }
+                    }
+                }
+            } else {
+                $totalReleasedEpisodes = $showData['number_of_episodes'] ?? 0;
+            }
 
-            if ($totalEpisodes > 0) {
+            if ($totalReleasedEpisodes > 0) {
                 // Count watched episodes
                 $watchedEpisodes = WatchProgress::where('user_id', $userId)
                     ->where('tmdb_show_id', $tmdbShowId)
@@ -198,7 +232,7 @@ class ShowController extends Controller
                     ->count();
 
                 // Calculate progress percentage
-                $progress = round(($watchedEpisodes / $totalEpisodes) * 100, 1);
+                $progress = round(($watchedEpisodes / $totalReleasedEpisodes) * 100, 1);
 
                 // Update watchlist item
                 $watchlistItem->update(['progress' => $progress]);

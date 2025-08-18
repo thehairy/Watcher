@@ -52,7 +52,40 @@ class WatchlistController extends Controller
                         ->where('watched', true)
                         ->count();
                     
-                    $totalEpisodes = $tmdbData['number_of_episodes'] ?? 0;
+                    // Get total episodes and filter only released episodes
+                    $totalEpisodes = 0;
+                    if (isset($tmdbData['seasons'])) {
+                        foreach ($tmdbData['seasons'] as $season) {
+                            if ($season['season_number'] > 0) {
+                                try {
+                                    $seasonData = $this->tmdbService->getTvSeason($item->show->tmdb_id, $season['season_number']);
+                                    if (isset($seasonData['episodes'])) {
+                                        foreach ($seasonData['episodes'] as $episode) {
+                                            // Only count released episodes
+                                            if (!empty($episode['air_date'])) {
+                                                $airDate = new \DateTime($episode['air_date']);
+                                                $today = new \DateTime();
+                                                $today->setTime(0, 0, 0);
+                                                
+                                                if ($airDate <= $today) {
+                                                    $totalEpisodes++;
+                                                }
+                                            } else {
+                                                // If no air date, assume it's released
+                                                $totalEpisodes++;
+                                            }
+                                        }
+                                    }
+                                } catch (\Exception $e) {
+                                    // Fallback to episode count from main show data if season fetch fails
+                                    $totalEpisodes = $tmdbData['number_of_episodes'] ?? 0;
+                                    break;
+                                }
+                            }
+                        }
+                    } else {
+                        $totalEpisodes = $tmdbData['number_of_episodes'] ?? 0;
+                    }
                     
                     $data['episodes_watched'] = $watchedEpisodes;
                     $data['total_episodes'] = $totalEpisodes;

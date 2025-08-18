@@ -34,20 +34,74 @@
                             />
                             <div class="flex-1 text-white">
                                 <h1 class="text-3xl font-bold mb-2">{{ mediaData.name || mediaData.title }}</h1>
-                                <div class="flex items-center space-x-4 text-sm">
-                                    <div class="flex items-center">
-                                        <Star class="w-4 h-4 mr-1 text-yellow-400" />
-                                        <span>{{ mediaData.vote_average?.toFixed(1) }}</span>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-4 text-sm">
+                                        <div class="flex items-center">
+                                            <Star class="w-4 h-4 mr-1 text-yellow-400" />
+                                            <span>{{ mediaData.vote_average?.toFixed(1) }}</span>
+                                        </div>
+                                        <span v-if="mediaData.first_air_date || mediaData.release_date">
+                                            {{ formatYear(mediaData.first_air_date || mediaData.release_date) }}
+                                        </span>
+                                        <span v-if="mediaData.number_of_seasons" class="bg-blue-600 px-2 py-1 rounded">
+                                            {{ mediaData.number_of_seasons }} Season{{ mediaData.number_of_seasons > 1 ? 's' : '' }}
+                                        </span>
+                                        <span v-if="mediaData.runtime" class="bg-green-600 px-2 py-1 rounded">
+                                            {{ mediaData.runtime }}m
+                                        </span>
                                     </div>
-                                    <span v-if="mediaData.first_air_date || mediaData.release_date">
-                                        {{ formatYear(mediaData.first_air_date || mediaData.release_date) }}
-                                    </span>
-                                    <span v-if="mediaData.number_of_seasons" class="bg-blue-600 px-2 py-1 rounded">
-                                        {{ mediaData.number_of_seasons }} Season{{ mediaData.number_of_seasons > 1 ? 's' : '' }}
-                                    </span>
-                                    <span v-if="mediaData.runtime" class="bg-green-600 px-2 py-1 rounded">
-                                        {{ mediaData.runtime }}m
-                                    </span>
+                                    
+                                    <!-- Watch Providers Icons -->
+                                    <div v-if="mediaData['watch/providers']?.results?.US && getTotalProviderCount(mediaData['watch/providers'].results.US) > 0" class="flex items-center space-x-2">
+                                        <div class="flex items-center space-x-1">
+                                            <!-- Flatrate providers -->
+                                            <template v-if="mediaData['watch/providers'].results.US.flatrate?.length">
+                                                <img 
+                                                    v-for="provider in mediaData['watch/providers'].results.US.flatrate.slice(0, 4)"
+                                                    :key="provider.provider_id"
+                                                    :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                                                    :alt="provider.provider_name"
+                                                    :title="provider.provider_name"
+                                                    class="w-8 h-8 rounded cursor-pointer hover:scale-110 transition-transform"
+                                                    @click.stop="showWatchProviders = true"
+                                                />
+                                            </template>
+                                            <!-- Buy providers (if no flatrate) -->
+                                            <template v-else-if="mediaData['watch/providers'].results.US.buy?.length">
+                                                <img 
+                                                    v-for="provider in mediaData['watch/providers'].results.US.buy.slice(0, 4)"
+                                                    :key="provider.provider_id"
+                                                    :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                                                    :alt="provider.provider_name"
+                                                    :title="provider.provider_name"
+                                                    class="w-8 h-8 rounded cursor-pointer hover:scale-110 transition-transform"
+                                                    @click.stop="showWatchProviders = true"
+                                                />
+                                            </template>
+                                            <!-- Rent providers (if no flatrate or buy) -->
+                                            <template v-else-if="mediaData['watch/providers'].results.US.rent?.length">
+                                                <img 
+                                                    v-for="provider in mediaData['watch/providers'].results.US.rent.slice(0, 4)"
+                                                    :key="provider.provider_id"
+                                                    :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                                                    :alt="provider.provider_name"
+                                                    :title="provider.provider_name"
+                                                    class="w-8 h-8 rounded cursor-pointer hover:scale-110 transition-transform"
+                                                    @click.stop="showWatchProviders = true"
+                                                />
+                                            </template>
+                                            
+                                            <!-- Show "+" if there are more providers -->
+                                            <div 
+                                                v-if="getTotalProviderCount(mediaData['watch/providers'].results.US) > 4"
+                                                class="w-8 h-8 bg-white/20 rounded flex items-center justify-center text-white text-sm cursor-pointer hover:bg-white/30 transition-colors"
+                                                @click.stop="showWatchProviders = true"
+                                                :title="`+${getTotalProviderCount(mediaData['watch/providers'].results.US) - 4} more`"
+                                            >
+                                                +{{ getTotalProviderCount(mediaData['watch/providers'].results.US) - 4 }}
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -62,136 +116,81 @@
                         <p class="text-gray-300 leading-relaxed">{{ mediaData.overview }}</p>
                     </div>
 
-                    <!-- Watch Providers for Movies -->
-                    <div v-if="type === 'movie' && mediaData['watch/providers']?.results?.US" class="mb-6">
-                        <h2 class="text-xl font-semibold text-white mb-4">Where to Watch</h2>
-                        <div class="bg-white/5 rounded-lg p-4">
-                            <div v-if="mediaData['watch/providers'].results.US.flatrate?.length" class="mb-4">
-                                <p class="text-sm text-gray-400 mb-2">Streaming</p>
-                                <div class="flex flex-wrap gap-2">
-                                    <div 
-                                        v-for="provider in mediaData['watch/providers'].results.US.flatrate"
-                                        :key="provider.provider_id"
-                                        class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
-                                    >
-                                        <img 
-                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
-                                            :alt="provider.provider_name"
-                                            class="w-6 h-6 rounded"
-                                        />
-                                        <span class="text-white text-sm">{{ provider.provider_name }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div v-if="mediaData['watch/providers'].results.US.buy?.length" class="mb-4">
-                                <p class="text-sm text-gray-400 mb-2">Buy</p>
-                                <div class="flex flex-wrap gap-2">
-                                    <div 
-                                        v-for="provider in mediaData['watch/providers'].results.US.buy"
-                                        :key="provider.provider_id"
-                                        class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
-                                    >
-                                        <img 
-                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
-                                            :alt="provider.provider_name"
-                                            class="w-6 h-6 rounded"
-                                        />
-                                        <span class="text-white text-sm">{{ provider.provider_name }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div v-if="mediaData['watch/providers'].results.US.rent?.length">
-                                <p class="text-sm text-gray-400 mb-2">Rent</p>
-                                <div class="flex flex-wrap gap-2">
-                                    <div 
-                                        v-for="provider in mediaData['watch/providers'].results.US.rent"
-                                        :key="provider.provider_id"
-                                        class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
-                                    >
-                                        <img 
-                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
-                                            :alt="provider.provider_name"
-                                            class="w-6 h-6 rounded"
-                                        />
-                                        <span class="text-white text-sm">{{ provider.provider_name }}</span>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div v-if="!mediaData['watch/providers'].results.US.flatrate?.length && !mediaData['watch/providers'].results.US.buy?.length && !mediaData['watch/providers'].results.US.rent?.length">
-                                <p class="text-gray-400 text-sm">No streaming providers available in your region.</p>
-                            </div>
+                    <!-- Watch Providers View -->
+                    <div v-if="showWatchProviders && mediaData['watch/providers']?.results?.US && getTotalProviderCount(mediaData['watch/providers'].results.US) > 0" class="mb-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h2 class="text-xl font-semibold text-white">Where to Watch</h2>
+                            <button 
+                                @click="showWatchProviders = false"
+                                class="text-blue-400 hover:text-blue-300 text-sm"
+                            >
+                                ← Back
+                            </button>
                         </div>
-                    </div>
-
-                    <!-- Watch Providers for TV Shows -->
-                    <div v-if="type === 'tv' && mediaData['watch/providers']?.results?.US" class="mb-6">
-                        <h2 class="text-xl font-semibold text-white mb-4">Where to Watch</h2>
-                        <div class="bg-white/5 rounded-lg p-4">
+                        
+                        <div class="bg-white/5 rounded-lg p-6">
                             <div v-if="mediaData['watch/providers'].results.US.flatrate?.length" class="mb-4">
-                                <p class="text-sm text-gray-400 mb-2">Streaming</p>
-                                <div class="flex flex-wrap gap-2">
+                                <h3 class="text-lg font-medium text-white mb-3">Streaming</h3>
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     <div 
                                         v-for="provider in mediaData['watch/providers'].results.US.flatrate"
                                         :key="provider.provider_id"
-                                        class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
+                                        class="flex flex-col items-center p-4 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
                                     >
                                         <img 
-                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                                            :src="`https://image.tmdb.org/t/p/w92${provider.logo_path}`"
                                             :alt="provider.provider_name"
-                                            class="w-6 h-6 rounded"
+                                            class="w-16 h-16 rounded-lg mb-2"
                                         />
-                                        <span class="text-white text-sm">{{ provider.provider_name }}</span>
+                                        <span class="text-white text-sm text-center">{{ provider.provider_name }}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div v-if="mediaData['watch/providers'].results.US.buy?.length" class="mb-4">
-                                <p class="text-sm text-gray-400 mb-2">Buy</p>
-                                <div class="flex flex-wrap gap-2">
+                            <div v-if="mediaData['watch/providers'].results.US.buy?.length" class="mb-2">
+                                <h3 class="text-lg font-medium text-white mb-3">Buy</h3>
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     <div 
                                         v-for="provider in mediaData['watch/providers'].results.US.buy"
                                         :key="provider.provider_id"
-                                        class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
+                                        class="flex flex-col items-center p-4 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
                                     >
                                         <img 
-                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                                            :src="`https://image.tmdb.org/t/p/w92${provider.logo_path}`"
                                             :alt="provider.provider_name"
-                                            class="w-6 h-6 rounded"
+                                            class="w-16 h-16 rounded-lg mb-2"
                                         />
-                                        <span class="text-white text-sm">{{ provider.provider_name }}</span>
+                                        <span class="text-white text-sm text-center">{{ provider.provider_name }}</span>
                                     </div>
                                 </div>
                             </div>
 
-                            <div v-if="mediaData['watch/providers'].results.US.rent?.length">
-                                <p class="text-sm text-gray-400 mb-2">Rent</p>
-                                <div class="flex flex-wrap gap-2">
+                            <div v-if="mediaData['watch/providers'].results.US.rent?.length" class="mb-4">
+                                <h3 class="text-lg font-medium text-white mb-3">Rent</h3>
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     <div 
                                         v-for="provider in mediaData['watch/providers'].results.US.rent"
                                         :key="provider.provider_id"
-                                        class="flex items-center space-x-2 bg-white/10 rounded-lg p-2"
+                                        class="flex flex-col items-center p-4 bg-white/10 rounded-lg hover:bg-white/20 transition-colors"
                                     >
                                         <img 
-                                            :src="`https://image.tmdb.org/t/p/w45${provider.logo_path}`"
+                                            :src="`https://image.tmdb.org/t/p/w92${provider.logo_path}`"
                                             :alt="provider.provider_name"
-                                            class="w-6 h-6 rounded"
+                                            class="w-16 h-16 rounded-lg mb-2"
                                         />
-                                        <span class="text-white text-sm">{{ provider.provider_name }}</span>
+                                        <span class="text-white text-sm text-center">{{ provider.provider_name }}</span>
                                     </div>
                                 </div>
                             </div>
 
                             <div v-if="!mediaData['watch/providers'].results.US.flatrate?.length && !mediaData['watch/providers'].results.US.buy?.length && !mediaData['watch/providers'].results.US.rent?.length">
-                                <p class="text-gray-400 text-sm">No streaming providers available in your region.</p>
+                                <p class="text-gray-400 text-center">No streaming providers available in your region.</p>
                             </div>
                         </div>
                     </div>
 
                     <!-- Seasons (TV Shows only) -->
-                    <div v-if="type === 'tv' && mediaData.seasons && !selectedSeason" class="mb-6">
+                    <div v-if="type === 'tv' && mediaData.seasons && !selectedSeason && !showWatchProviders" class="mb-6">
                         <h2 class="text-xl font-semibold text-white mb-4">Seasons</h2>
                         <div class="space-y-3">
                             <div 
@@ -208,31 +207,39 @@
                                 <div class="flex-1">
                                     <h3 class="text-white font-medium">{{ season.name }}</h3>
                                     <p class="text-gray-400 text-sm">{{ season.episode_count }} episodes</p>
-                                    <p class="text-gray-500 text-sm">{{ formatYear(season.air_date) }}</p>
+                                    <p class="text-gray-500 text-sm">
+                                        {{ formatYear(season.air_date) }}
+                                        <span v-if="!isSeasonReleased(season)" class="text-orange-400 ml-2">(Unreleased)</span>
+                                    </p>
                                 </div>
                                 <div class="flex items-center space-x-3">
-                                    <label class="flex items-center cursor-pointer" @click.stop>
-                                        <input 
-                                            type="checkbox"
-                                            :checked="isSeasonComplete(season.season_number)"
-                                            @change="(e) => markSeasonComplete(season.season_number, (e.target as HTMLInputElement).checked)"
-                                            class="sr-only"
-                                        />
-                                        <div class="relative">
-                                            <div :class="[
-                                                'w-5 h-5 rounded-full border-2 transition-all duration-200',
-                                                isSeasonComplete(season.season_number) 
-                                                    ? 'bg-green-500 border-green-500' 
-                                                    : 'border-gray-400 hover:border-green-400'
-                                            ]"></div>
-                                            <div v-if="isSeasonComplete(season.season_number)" 
-                                                 class="absolute inset-0 flex items-center justify-center">
-                                                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                                </svg>
+                                    <div v-if="isSeasonReleased(season)" class="flex items-center">
+                                        <label class="flex items-center cursor-pointer" @click.stop>
+                                            <input 
+                                                type="checkbox"
+                                                :checked="isSeasonComplete(season.season_number)"
+                                                @change="(e) => markSeasonComplete(season.season_number, (e.target as HTMLInputElement).checked)"
+                                                class="sr-only"
+                                            />
+                                            <div class="relative">
+                                                <div :class="[
+                                                    'w-5 h-5 rounded-full border-2 transition-all duration-200',
+                                                    isSeasonComplete(season.season_number) 
+                                                        ? 'bg-green-500 border-green-500' 
+                                                        : 'border-gray-400 hover:border-green-400'
+                                                ]"></div>
+                                                <div v-if="isSeasonComplete(season.season_number)" 
+                                                     class="absolute inset-0 flex items-center justify-center">
+                                                    <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                    </svg>
+                                                </div>
                                             </div>
-                                        </div>
-                                    </label>
+                                        </label>
+                                    </div>
+                                    <div v-else class="flex items-center">
+                                        <div class="w-5 h-5 rounded-full border-2 border-gray-600 bg-gray-700 opacity-50"></div>
+                                    </div>
                                     <ChevronRight class="w-5 h-5 text-gray-400" />
                                 </div>
                             </div>
@@ -266,33 +273,41 @@
                                             <h4 class="text-white font-medium">
                                                 {{ episode.episode_number }}. {{ episode.name }}
                                             </h4>
-                                            <p class="text-gray-400 text-sm mb-1">{{ formatDate(episode.air_date) }}</p>
+                                            <p class="text-gray-400 text-sm mb-1">
+                                                {{ formatDate(episode.air_date) }}
+                                                <span v-if="!isEpisodeReleased(episode)" class="text-orange-400 ml-2">(Unreleased)</span>
+                                            </p>
                                             <p class="text-gray-300 text-sm line-clamp-2">{{ episode.overview }}</p>
                                         </div>
                                     </div>
                                 </div>
-                                <label class="flex items-center cursor-pointer" @click.stop>
-                                    <input 
-                                        type="checkbox"
-                                        :checked="isEpisodeWatched(episode)"
-                                        @change="(e) => toggleEpisodeWatched(episode, (e.target as HTMLInputElement).checked)"
-                                        class="sr-only"
-                                    />
-                                    <div class="relative">
-                                        <div :class="[
-                                            'w-5 h-5 rounded-full border-2 transition-all duration-200',
-                                            isEpisodeWatched(episode) 
-                                                ? 'bg-green-500 border-green-500' 
-                                                : 'border-gray-400 hover:border-green-400'
-                                        ]"></div>
-                                        <div v-if="isEpisodeWatched(episode)" 
-                                             class="absolute inset-0 flex items-center justify-center">
-                                            <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
-                                            </svg>
+                                <div v-if="isEpisodeReleased(episode)" class="flex items-center">
+                                    <label class="flex items-center cursor-pointer" @click.stop>
+                                        <input 
+                                            type="checkbox"
+                                            :checked="isEpisodeWatched(episode)"
+                                            @change="(e) => toggleEpisodeWatched(episode, (e.target as HTMLInputElement).checked)"
+                                            class="sr-only"
+                                        />
+                                        <div class="relative">
+                                            <div :class="[
+                                                'w-5 h-5 rounded-full border-2 transition-all duration-200',
+                                                isEpisodeWatched(episode) 
+                                                    ? 'bg-green-500 border-green-500' 
+                                                    : 'border-gray-400 hover:border-green-400'
+                                            ]"></div>
+                                            <div v-if="isEpisodeWatched(episode)" 
+                                                 class="absolute inset-0 flex items-center justify-center">
+                                                <svg class="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                                    <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                                                </svg>
+                                            </div>
                                         </div>
-                                    </div>
-                                </label>
+                                    </label>
+                                </div>
+                                <div v-else class="flex items-center">
+                                    <div class="w-5 h-5 rounded-full border-2 border-gray-600 bg-gray-700 opacity-50"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -401,7 +416,7 @@
                             </div>
 
                             <!-- Watch Status Toggle -->
-                            <div class="flex justify-center">
+                            <div v-if="isEpisodeReleased(selectedEpisode)" class="flex justify-center">
                                 <label class="flex items-center cursor-pointer bg-white/10 rounded-lg p-4 hover:bg-white/20 transition-colors">
                                     <span class="text-white mr-3">Mark as watched</span>
                                     <input 
@@ -425,6 +440,12 @@
                                         </div>
                                     </div>
                                 </label>
+                            </div>
+                            <div v-else class="flex justify-center">
+                                <div class="flex items-center bg-white/5 rounded-lg p-4 opacity-50">
+                                    <span class="text-gray-400 mr-3">Episode not yet released</span>
+                                    <div class="w-6 h-6 rounded-full border-2 border-gray-600 bg-gray-700"></div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -541,6 +562,7 @@ const completedSeasons = ref<Set<number>>(new Set());
 const episodesWereUpdated = ref(false);
 const selectedEpisode = ref<EpisodeDetails | null>(null);
 const episodeDetailsLoading = ref(false);
+const showWatchProviders = ref(false);
 
 // Image URLs
 const tmdbImageBaseUrl = 'https://image.tmdb.org/t/p/w500';
@@ -576,6 +598,32 @@ const formatDate = (dateString: string | null | undefined) => {
     });
 };
 
+// Helper function to check if an episode has been released
+const isEpisodeReleased = (episode: Episode) => {
+    if (!episode.air_date) return true; // If no air date, assume it's released
+    const airDate = new Date(episode.air_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    return airDate <= today;
+};
+
+// Helper function to check if a season has been released
+const isSeasonReleased = (season: Season) => {
+    if (!season.air_date) return true; // If no air date, assume it's released
+    const airDate = new Date(season.air_date);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0); // Reset time to start of day
+    return airDate <= today;
+};
+
+// Helper function to count total providers
+const getTotalProviderCount = (providers: any) => {
+    const flatrate = providers?.flatrate?.length || 0;
+    const buy = providers?.buy?.length || 0;
+    const rent = providers?.rent?.length || 0;
+    return flatrate + buy + rent;
+};
+
 // Methods
 const closeModal = () => {
     if (episodesWereUpdated.value) {
@@ -590,6 +638,7 @@ const closeModal = () => {
     completedSeasons.value.clear();
     selectedEpisode.value = null;
     episodeDetailsLoading.value = false;
+    showWatchProviders.value = false;
 };
 
 const fetchMediaData = async () => {
@@ -644,18 +693,27 @@ const loadWatchedEpisodes = async () => {
         const data = await response.json();
         watchedEpisodes.value = new Set(data);
         
-        // Calculate completed seasons based on watched episodes
+        // Calculate completed seasons based on watched episodes (only counting released episodes)
         if (mediaData.value?.seasons) {
             completedSeasons.value.clear();
             for (const season of mediaData.value.seasons) {
                 if (season.season_number > 0) {
-                    // Fetch season data to check if all episodes are watched
+                    // Fetch season data to check if all released episodes are watched
                     try {
                         const seasonResponse = await fetch(`/api/tv/${props.itemId}/season/${season.season_number}`);
                         if (seasonResponse.ok) {
                             const seasonData = await seasonResponse.json();
-                            const allEpisodesWatched = seasonData.episodes?.every((ep: any) => watchedEpisodes.value.has(ep.id));
-                            if (allEpisodesWatched && seasonData.episodes?.length > 0) {
+                            // Filter to only released episodes
+                            const releasedEpisodes = seasonData.episodes?.filter((ep: any) => {
+                                if (!ep.air_date) return true;
+                                const airDate = new Date(ep.air_date);
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                return airDate <= today;
+                            }) || [];
+                            
+                            const allReleasedEpisodesWatched = releasedEpisodes.every((ep: any) => watchedEpisodes.value.has(ep.id));
+                            if (allReleasedEpisodesWatched && releasedEpisodes.length > 0) {
                                 completedSeasons.value.add(season.season_number);
                             }
                         }
@@ -713,20 +771,42 @@ const markSeasonComplete = async (seasonNumber: number, checked?: boolean) => {
     const watched = checked !== undefined ? checked : true;
     
     try {
-        const response = await fetch('/api/watch-progress/season', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
-            },
-            body: JSON.stringify({
-                show_id: props.itemId,
-                season_number: seasonNumber,
-                watched: watched
-            })
-        });
+        // Get season data to only mark released episodes
+        const seasonResponse = await fetch(`/api/tv/${props.itemId}/season/${seasonNumber}`);
+        if (!seasonResponse.ok) throw new Error('Failed to fetch season data');
+        
+        const seasonData = await seasonResponse.json();
+        const releasedEpisodes = seasonData.episodes?.filter((ep: any) => {
+            if (!ep.air_date) return true;
+            const airDate = new Date(ep.air_date);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            return airDate <= today;
+        }) || [];
 
-        if (!response.ok) throw new Error('Failed to mark season complete');
+        // Mark only released episodes as watched/unwatched
+        for (const episode of releasedEpisodes) {
+            const response = await fetch('/api/watch-progress/episode', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '',
+                },
+                body: JSON.stringify({
+                    episode_id: episode.id,
+                    show_id: props.itemId,
+                    watched: watched
+                })
+            });
+
+            if (!response.ok) throw new Error('Failed to update episode status');
+
+            if (watched) {
+                watchedEpisodes.value.add(episode.id);
+            } else {
+                watchedEpisodes.value.delete(episode.id);
+            }
+        }
 
         // Update local state
         if (watched) {
@@ -735,7 +815,7 @@ const markSeasonComplete = async (seasonNumber: number, checked?: boolean) => {
             completedSeasons.value.delete(seasonNumber);
         }
 
-        success('Season Updated', `Season ${seasonNumber} ${watched ? 'marked as complete' : 'unmarked'}`);
+        success('Season Updated', `Season ${seasonNumber} ${watched ? 'marked as complete' : 'unmarked'} (${releasedEpisodes.length} released episodes)`);
         
         // Mark that episodes were updated
         episodesWereUpdated.value = true;
@@ -784,6 +864,7 @@ watch(() => props.isVisible, (newValue) => {
         episodesWereUpdated.value = false;
         selectedEpisode.value = null;
         episodeDetailsLoading.value = false;
+        showWatchProviders.value = false;
     }
 });
 </script>
