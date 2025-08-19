@@ -4,10 +4,19 @@
     <DropdownMenu @update:open="onOpenChange">
         <DropdownMenuTrigger as-child>
             <button 
-                class="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 hover:scale-105"
+                class="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-xl transition-all duration-200 hover:scale-105 flex items-center justify-center"
                 :disabled="loading"
+                :title="`Country: ${countries.find(c => c.iso_3166_1 === selectedCountry)?.english_name || selectedCountry}`"
             >
-                <Settings class="w-5 h-5" :class="{ 'animate-spin': loading }" />
+                <span 
+                    v-if="!loading" 
+                    :class="selectedCountryFlag"
+                    class="w-6 h-4"
+                ></span>
+                <Settings 
+                    v-else 
+                    class="w-5 h-5 animate-spin" 
+                />
             </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent 
@@ -67,12 +76,18 @@
                         :class="{ 'bg-white/5': selectedCountry === country.iso_3166_1 }"
                         @click="updateCountry(country.iso_3166_1)"
                     >
-                        <span class="flex items-center gap-2 flex-1 min-w-0">
-                            <span class="font-medium">{{ country.english_name }}</span>
-                            <span v-if="country.native_name !== country.english_name" 
-                                  class="text-sm text-white/50 truncate">
-                                ({{ country.native_name }})
-                            </span>
+                        <span class="flex items-center gap-3 flex-1 min-w-0">
+                            <span 
+                                :class="getCountryFlag(country.iso_3166_1)"
+                                class="w-6 h-4"
+                            ></span>
+                            <div class="flex flex-col min-w-0">
+                                <span class="font-medium">{{ country.english_name }}</span>
+                                <span v-if="country.native_name !== country.english_name" 
+                                      class="text-sm text-white/50 truncate">
+                                    {{ country.native_name }}
+                                </span>
+                            </div>
                         </span>
                         <Check 
                             v-if="selectedCountry === country.iso_3166_1" 
@@ -103,6 +118,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { usePage } from '@inertiajs/vue3';
 import { useToast } from '@/composables/useToast';
+import { useCountryFlag } from '@/composables/useCountryFlag';
 import axios from 'axios';
 
 interface Country {
@@ -114,12 +130,16 @@ interface Country {
 const page = usePage();
 const user = page.props.auth?.user;
 const { success, error } = useToast();
+const { getCountryFlag } = useCountryFlag();
 
 const countries = ref<Country[]>([]);
 const selectedCountry = ref<string>(user?.country || 'US');
 const loading = ref(true);
 const searchQuery = ref<string>('');
 const searchInput = ref<HTMLInputElement>();
+
+// Computed property for the flag emoji
+const selectedCountryFlag = computed(() => getCountryFlag(selectedCountry.value));
 
 const filteredCountries = computed(() => {
     if (!searchQuery.value.trim()) {

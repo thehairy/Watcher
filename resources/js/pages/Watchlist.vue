@@ -369,15 +369,6 @@ const getStatusText = (status: string) => {
 
 const getEpisodeProgress = (item: WatchlistItem) => {
     if (item.type === 'tv') {
-        console.log('Episode progress debug:', {
-            type: item.type,
-            episodes_watched: item.episodes_watched,
-            total_episodes: item.total_episodes,
-            content_episodes: item.content?.number_of_episodes,
-            item_id: item.id,
-            content_id: item.content?.id
-        });
-        
         if (item.total_episodes && item.total_episodes > 0) {
             const watched = item.episodes_watched || 0;
             return `${watched}/${item.total_episodes} episodes`;

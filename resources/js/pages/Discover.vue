@@ -9,7 +9,7 @@
 
                 <!-- Search -->
                 <div class="mb-12">
-                    <div class="relative max-w-2xl mx-auto">
+                    <div class="relative max-w-2xl">
                         <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                             <Search class="h-5 w-5 text-blue-300" />
                         </div>
